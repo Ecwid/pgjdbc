@@ -498,4 +498,8 @@ public abstract class QueryExecutorBase implements QueryExecutor {
 
     parameterStatuses.put(parameterName, parameterStatus);
   }
+
+  public PGStream getPgStream() {
+    return pgStream;
+  }
 }
