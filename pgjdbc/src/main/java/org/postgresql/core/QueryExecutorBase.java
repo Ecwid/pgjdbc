@@ -379,4 +379,8 @@ public abstract class QueryExecutorBase implements QueryExecutor {
   protected boolean hasNotifications() {
     return notifications.size() > 0;
   }
+
+  public PGStream getPgStream() {
+    return pgStream;
+  }
 }

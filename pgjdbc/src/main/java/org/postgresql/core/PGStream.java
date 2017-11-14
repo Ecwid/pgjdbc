@@ -20,6 +20,7 @@ import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.net.SocketFactory;
 
@@ -36,6 +37,11 @@ public class PGStream {
 
   private final byte[] _int4buf;
   private final byte[] _int2buf;
+
+  // the number of bytes received from PostgreSQL server
+  private final AtomicLong receivedBytes = new AtomicLong();
+  // the number of bytes sent to PostgreSQL server
+  private final AtomicLong sentBytes = new AtomicLong();
 
   private Socket connection;
   private VisibleBufferedInputStream pg_input;
@@ -126,8 +132,8 @@ public class PGStream {
     connection.setTcpNoDelay(true);
 
     // Buffer sizes submitted by Sverre H Huseby <sverrehu@online.no>
-    pg_input = new VisibleBufferedInputStream(connection.getInputStream(), 8192);
-    pg_output = new BufferedOutputStream(connection.getOutputStream(), 8192);
+    pg_input = new VisibleBufferedInputStream(new CountingInputStream(connection.getInputStream(), receivedBytes), 8192);
+    pg_output = new BufferedOutputStream(new CountingOutputStream(connection.getOutputStream(), sentBytes), 8192);
 
     if (encoding != null) {
       setEncoding(encoding);
@@ -587,5 +593,13 @@ public class PGStream {
     pg_output.close();
     pg_input.close();
     connection.close();
+  }
+
+  public long getReceivedBytesAndResetCounter() {
+    return receivedBytes.getAndSet(0);
+  }
+
+  public long getSentBytesAndResetCounter() {
+    return sentBytes.getAndSet(0);
   }
 }
