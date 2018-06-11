@@ -393,4 +393,9 @@ public abstract class QueryExecutorBase implements QueryExecutor {
   public PGStream getPgStream() {
     return pgStream;
   }
+
+  public int getCancelPid() {
+    return cancelPid;
+  }
+
 }
