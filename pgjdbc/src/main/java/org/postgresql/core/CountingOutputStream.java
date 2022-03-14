@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2017, PostgreSQL Global Development Group
+ * See the LICENSE file in the project root for more information.
+ */
+
 package org.postgresql.core;
 
 import java.io.IOException;
@@ -10,12 +15,12 @@ import java.util.concurrent.atomic.AtomicLong;
 final class CountingOutputStream extends OutputStream {
 
   private final OutputStream peer;
-	private final AtomicLong counter;
+  private final AtomicLong counter;
 
-	public CountingOutputStream(OutputStream out, AtomicLong counter) {
-		this.peer = out;
-		this.counter = counter;
-	}
+  CountingOutputStream(OutputStream out, AtomicLong counter) {
+    this.peer = out;
+    this.counter = counter;
+  }
 
   @Override
   public void write(int b) throws IOException {
