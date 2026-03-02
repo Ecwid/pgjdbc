@@ -35,6 +35,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.net.SocketFactory;
 
@@ -53,6 +55,11 @@ public class PGStream implements Closeable, Flushable {
   private VisibleBufferedInputStream pgInput;
   private PgBufferedOutputStream pgOutput;
   private @Nullable ProtocolVersion protocolVersion;
+
+  // the number of bytes received from PostgreSQL server
+  private final AtomicLong receivedBytes = new AtomicLong();
+  // the number of bytes sent to PostgreSQL server
+  private final AtomicLong sentBytes = new AtomicLong();
 
   public boolean isGssEncrypted() {
     return gssEncrypted;
@@ -292,9 +299,9 @@ public class PGStream implements Closeable, Flushable {
     // really need to.
     connection.setTcpNoDelay(true);
 
-    pgInput = new VisibleBufferedInputStream(connection.getInputStream(), 8192);
+    pgInput = new VisibleBufferedInputStream(new CountingInputStream(connection.getInputStream(), receivedBytes), 8192);
     int sendBufferSize = Math.min(maxSendBufferSize, Math.max(8192, socket.getSendBufferSize()));
-    pgOutput = new PgBufferedOutputStream(connection.getOutputStream(), sendBufferSize);
+    pgOutput = new PgBufferedOutputStream(new CountingOutputStream(connection.getOutputStream(), sentBytes), sendBufferSize);
 
     if (encoding != null) {
       setEncoding(encoding);
@@ -746,6 +753,14 @@ public class PGStream implements Closeable, Flushable {
 
   public int getNetworkTimeout() throws IOException {
     return connection.getSoTimeout();
+  }
+
+  public long getReceivedBytesAndResetCounter() {
+    return receivedBytes.getAndSet(0);
+  }
+
+  public long getSentBytesAndResetCounter() {
+    return sentBytes.getAndSet(0);
   }
 
   /**
